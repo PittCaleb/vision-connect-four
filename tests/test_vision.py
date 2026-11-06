@@ -5,9 +5,9 @@ import numpy as np
 import pytest
 
 from connect4.board import empty_grid, grid_from_moves
-from connect4.synthetic import DEFAULT_CORNERS, corner_holes, render_board
-from connect4.vision import (VisionConfig, corner_hole_centers, find_holes, order_corners,
-                             read_board)
+from connect4.synthetic import BLUE, DEFAULT_CORNERS, corner_holes, render_board
+from connect4.vision import (VisionConfig, cell_layout, corner_hole_centers, find_holes,
+                             order_corners, read_board)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 POSITIONS = ["", "4", "4453", "4444443333221", "1234567123456712345671234567"]
@@ -80,3 +80,36 @@ def test_real_board_with_pieces():
     reading = read_board(frame, VisionConfig())
     rows = ["".join(".RY"[v] for v in row) for row in reading.grid]
     assert rows == [".......", ".......", ".......", ".......", "...R...", ".R.Y..Y"]
+
+
+def fill_holes(frame, holes):
+    """Paint over holes with the board's blue so they can't be detected."""
+    for x, y in holes:
+        cv2.circle(frame, (int(x), int(y)), 34, BLUE, -1)
+    return frame
+
+
+def test_missing_corner_hole():
+    # A squashed far-corner hole that detection drops used to wreck the grid fit.
+    grid = grid_from_moves("4453")
+    frame = fill_holes(render_board(grid), corner_holes()[2:3])
+    assert read_board(frame, VisionConfig()).grid == grid
+
+
+def test_whole_edge_column_missing():
+    # Holes found span only 6 columns; the fit must still place them correctly.
+    grid = grid_from_moves("4453")
+    reading = read_board(render_board(grid), VisionConfig())
+    centers = cell_layout(VisionConfig())[0]
+    right_column = reading.project(centers[:, -1])
+    frame = fill_holes(render_board(grid), right_column)
+    assert len(find_holes(frame, VisionConfig())) == 36
+    assert read_board(frame, VisionConfig()).grid == grid
+
+
+def test_real_board_evening_light_at_an_angle():
+    # Evening light: yellow is paler (saturation ~150), and the board is turned
+    # enough that far-side holes look small and squashed.
+    frame = cv2.imread(str(FIXTURES / "real_evening_angled.png"))
+    rows = ["".join(".RY"[v] for v in row) for row in read_board(frame, VisionConfig()).grid]
+    assert rows == [".......", ".......", ".......", ".......", "...Y...", "...R..."]

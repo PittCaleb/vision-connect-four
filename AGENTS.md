@@ -66,7 +66,7 @@ tests/
   test_app.py      worker behavior, suggestion text, announcements (uses fakes)
   test_speech.py   speech queue (patches `say`; never makes sound)
   test_replay.py   loading logs (including mid-game starts and Yellow first), stepping
-  fixtures/        real_empty.png, real_pieces.png: webcam frames of the real board, cropped
+  fixtures/        real_*.png: cropped webcam frames of the real board (daylight, evening, angled)
 docs/screenshot.jpg  README image, rendered from --demo 4455 (not a real photo)
 games/               game logs (created at runtime; git-ignored)
 calibration.json     hand-clicked corner holes (created by the C key; git-ignored)
@@ -221,16 +221,27 @@ these over changing the algorithm.
    with saturation of at least 150 so a bluish window or table is excluded). A
    3×3 opening removes specks. Then `findContours(RETR_CCOMP)`: child contours
    are holes inside blue regions. Keep holes with at least `min_hole_area` of the
-   frame and circularity of at least `min_hole_circularity`, group them by
-   parent region, take the largest group, and drop outliers by size.
+   frame and circularity of at least `min_hole_circularity` (0.45, because
+   far-side holes on an angled board look squashed). Group them by parent
+   region, take the largest group, and drop size outliers (under 0.2× or over
+   2.5× the median, a wide range because of perspective). `_detect_holes` also
+   returns the blue mask and the filled board region, for step 2.
 2. **`fit_grid`:**
-   - Start from a homography mapping the 4 most extreme hole centers to the
-     ideal corner holes (`corner_hole_centers`).
-   - Then, three times: project all 42 ideal holes, match each to the nearest
-     detected hole within 0.35 × spacing, and refit with `findHomography` on all
-     matches.
-   - Require at least `min_holes` (34) unique matches. Missing holes, such as one
-     behind a cable or a hand, are fine.
+   - **Give each hole lattice coordinates** (`_lattice_coords`): starting from
+     the hole nearest the middle, walk to neighbors within 1.7× each hole's
+     nearest-neighbor distance. Each step is horizontal or vertical (diagonals
+     are skipped), which gives each hole integer (column, row) steps.
+   - **Try every placement:** if the holes span fewer than 7 columns or 6 rows,
+     for example because a whole edge is undetected, try every offset. For each,
+     fit a RANSAC homography, project all 42 holes, and score how many land on
+     non-blue pixels inside the board region. The best score wins.
+   - **Refine** (`_refine`), three times: match each projected hole to the
+     nearest detected hole within 0.35 × spacing, and refit on all matches.
+     Require at least `min_holes` (34) unique matches.
+   - **Why not the four extreme holes:** the earlier fit started from the 4
+     most extreme detected holes. One undetected corner hole (squashed at an
+     angle, or dark behind) picked the wrong corner and failed completely. That
+     happened in a real game, in evening light, with the board turned slightly.
 3. **`read_board`:** warp the frame to a flat 700×600 view (`WARP_W`,
    `WARP_H`), then run `classify_cells`. That samples a disk at each hole
    (`sample_radius` = 0.3 of a cell) and calls it red or yellow if at least
@@ -247,8 +258,9 @@ saturation and value 0–255):
 
 | Thing | Hue | Saturation | Value |
 | --- | --- | --- | --- |
-| Red pieces | 0 (wraps to 179) | 250–255 | 113–144 |
-| Yellow pieces | 16–18 (orange-tinted) | 190–235 | 139–170 |
+| Red pieces | 0–3 (wraps to 179) | 234–255 | 113–192 |
+| Yellow pieces, daylight | 16–18 (orange-tinted) | 190–235 | 139–170 |
+| Yellow pieces, evening light | 19–21 | **142–157** | 194–208 |
 | Board blue | 107–111 | 200–255 | 80–130 |
 | Blue stand (darker) | 109–114 | 190–255 | 30–57 |
 | Wood table seen through an empty hole | 0–6 (reddish) | 65–119 | 57–80 |
@@ -258,12 +270,14 @@ The current thresholds are:
 
 - red: hue at most 8 or at least 170
 - yellow: hue 12–40
-- pieces: saturation at least 160 and value at least 90 (`min_saturation`,
-  `min_value`)
+- red: saturation at least 160 (`red_min_saturation`)
+- yellow: saturation at least 110 (`yellow_min_saturation`)
+- both: value at least 90 (`min_value`)
 
-The saturation and value floors are what stop dull reddish wood behind empty
-holes from reading as red. Don't lower them without checking
-`tests/fixtures/real_empty.png` and `real_pieces.png`.
+Red's high saturation floor is what stops dull reddish wood behind empty holes
+from reading as red. Yellow needs a lower floor, because evening light washes it
+out to about 150. Don't change these without checking all the real fixtures:
+`real_empty.png`, `real_pieces.png` and `real_evening_angled.png`.
 
 **Retuning colors for a new board or new lighting:**
 
