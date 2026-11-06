@@ -61,9 +61,34 @@ python -m connect4 --demo 4455
    off is fine; much more and the holes become thin slivers the app can't read.
 2. **Get the whole board in the frame** with a little space around it.
 3. **Keep the camera still** during the game.
-4. **Use even lighting.** Daylight and ordinary evening room light both work, and
-   a bright window behind the board is fine, since the app ignores what shows
-   through empty holes. Avoid strong glare on the pieces and very dim light.
+4. **Light the board evenly.** See "Lighting" below. It makes the biggest
+   difference to how reliably pieces are read.
+
+### Lighting
+
+The app tells red from yellow by color, so the light on the board matters more
+than anything else.
+
+**Works well:**
+- Daylight from a window to the side of the board, or ordinary room lighting.
+- Evening light (tested). Yellow pieces look paler in warm or fading light, and
+  the app allows for that.
+- A bright window or wall *behind* the board. The app ignores whatever shows
+  through empty holes.
+
+**Causes problems:**
+
+| Lighting | What goes wrong | What to do |
+| --- | --- | --- |
+| Dim room | Colors fade toward gray, so pieces read as empty, or the board isn't found | Turn on a lamp near the board |
+| Glare or direct sun on the board | Shiny spots look white, so a piece can read as empty | Move the light or tilt the board slightly |
+| Strongly colored light (warm bulbs, sunset, colored LEDs) | Yellow drifts toward orange, red toward pink | Add a neutral light, or retune the colors (see `AGENTS.md`) |
+| Shadow over part of the board | Pieces in the shadow, often the bottom rows, read as empty | Light the board from the front or side, not from directly above |
+| Light changing during a game | A setup that worked can start missing pieces | Keep the lighting steady, for example a lamp rather than fading daylight |
+
+**Quick check before a game:** drop one red and one yellow piece in. Both should
+be labeled R and Y on screen, and stay that way without flickering. If one
+shows as empty or flickers, fix the lighting before playing.
 
 ## Play
 
@@ -201,8 +226,8 @@ mistake to see what should have been played. Replays aren't logged as new games.
 | "attempted relative import with no known parent package" | Run `python -m connect4`, not `python connect4`. |
 | "Couldn't open camera" | Allow camera access for your terminal in System Settings → Privacy & Security → Camera, then restart the app. |
 | Wrong camera, or a black or placeholder image | Try `--camera 1` or `--camera 2`. |
-| "Board not found" | Turn the board to face the camera, make sure the whole board is in view, and add light if the room is dim. If it still fails, press C and click the 4 corner holes. |
-| A piece is misread | Check for glare or a strong color cast. The color thresholds are in `VisionConfig` in `connect4/vision.py`; `AGENTS.md` explains how to retune them from a captured frame. |
+| "Board not found" | Turn the board to face the camera, make sure the whole board is in view, and add light if the room is dim (see "Lighting"). If it still fails, press C and click the 4 corner holes. |
+| A piece is misread, or flickers | See "Lighting": usually dim light, glare or a color cast. The color thresholds are in `VisionConfig` in `connect4/vision.py`; `AGENTS.md` explains how to retune them from a captured frame. |
 | "That doesn't look like a real position" | The reading has a floating piece or impossible counts. Usually a hand or glare; it clears once the board is visible again. |
 | Wrong player shown to move | If Yellow went first, press F or start with `--first yellow`. |
 
