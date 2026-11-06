@@ -293,4 +293,7 @@ need a webcam.
 
 ## License
 
-[MIT](LICENSE): free to use, modify and share, as long as the copyright notice is kept.
+[MIT](LICENSE): free to use, modify and share, with attribution. Keep the
+copyright notice and license with any copy or substantial part of the code.
+
+If you build on this project, a link back to this repo is appreciated.
