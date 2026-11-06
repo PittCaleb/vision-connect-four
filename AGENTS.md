@@ -29,7 +29,7 @@ pip install -r requirements.txt
 
 python -m connect4 --demo 4455            # no camera needed: rendered board
 python -m connect4 --me red --audio       # real game: webcam 0, you are Red, spoken advice
-python -m pytest -q                       # about 1 minute, about 150 tests, no webcam needed
+python -m pytest -q                       # about 1 minute, 160 tests, no webcam needed
 python -m pytest --cov=connect4 --cov-report=term
 ```
 
@@ -68,6 +68,13 @@ tests/
   test_replay.py   loading logs (including mid-game starts and Yellow first), stepping
   fixtures/        real_*.png: cropped webcam frames of the real board (daylight, evening, angled)
 docs/screenshot.jpg  README image, rendered from --demo 4455 (not a real photo)
+README.md            user guide (GitHub landing page)
+AGENTS.md            this file: the single source of instructions for AI agents
+TODO.md              open work (optional C solver, ideas)
+CLAUDE.md, GEMINI.md, .github/copilot-instructions.md, .cursor/rules/agents.mdc,
+.windsurfrules       pointer files that send each AI tool to AGENTS.md; keep them
+                     as pointers only, and put new instructions here instead
+.gitignore           ignores .venv, caches, coverage, games/ and calibration.json
 games/               game logs (created at runtime; git-ignored)
 calibration.json     hand-clicked corner holes (created by the C key; git-ignored)
 ```
@@ -246,7 +253,10 @@ these over changing the algorithm.
    `WARP_H`), then run `classify_cells`. That samples a disk at each hole
    (`sample_radius` = 0.3 of a cell) and calls it red or yellow if at least
    `min_fill` (45%) of the pixels match. `BoardReading.project(points)` maps
-   flat-view coordinates back to the frame for drawing.
+   flat-view coordinates back to the frame for drawing. `margin_x` and
+   `margin_y` set where the holes sit in the flat view, which only affects the
+   outline drawn around the board. Changing them doesn't change detection,
+   because the grid is fitted to the holes themselves.
 4. **Manual fallback (C key):** the user clicks the 4 corner holes' centers.
    They're saved to `calibration.json` as `{"corner_holes": [[x, y], ...]}` and
    passed to `read_board(frame, cfg, corner_holes=...)`, which skips detection.
@@ -268,8 +278,8 @@ saturation and value 0–255):
 
 The current thresholds are:
 
-- red: hue at most 8 or at least 170
-- yellow: hue 12–40
+- red: hue at most 8 or at least 170 (`red_hue_max`, `red_hue_min`)
+- yellow: hue 12–40 (`yellow_hue`)
 - red: saturation at least 160 (`red_min_saturation`)
 - yellow: saturation at least 110 (`yellow_min_saturation`)
 - both: value at least 90 (`min_value`)
@@ -489,6 +499,21 @@ but not the first few moves.
   generation run that may take hours.
 - **There are two solver implementations to keep in agreement.** The tests above
   are what keeps them honest.
+
+## Repository and workflow
+
+- **GitHub:** https://github.com/PittCaleb/vision-connect-four (public). `main` is
+  the stable branch.
+- **Branches and PRs:** do new work on a branch and open a pull request into
+  `main`. The owner tests changes on the real board and webcam before merging,
+  so don't merge PRs yourself.
+- **Commit messages:** a short summary line, then a body explaining what changed
+  and why (see `git log` for examples).
+- **Real-world failures are the best test cases.** When a problem shows up on the
+  real board (lighting, angle, a misread piece):
+  1. Capture the frame.
+  2. Fix the problem.
+  3. Add the cropped frame to `tests/fixtures/` with a test.
 
 ## Working style for this repo
 

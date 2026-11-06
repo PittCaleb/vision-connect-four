@@ -61,8 +61,9 @@ python -m connect4 --demo 4455
    off is fine; much more and the holes become thin slivers the app can't read.
 2. **Get the whole board in the frame** with a little space around it.
 3. **Keep the camera still** during the game.
-4. **Use even lighting.** A bright window behind the board is fine, since the app
-   ignores what shows through empty holes. Avoid strong glare on the pieces.
+4. **Use even lighting.** Daylight and ordinary evening room light both work, and
+   a bright window behind the board is fine, since the app ignores what shows
+   through empty holes. Avoid strong glare on the pieces and very dim light.
 
 ## Play
 
@@ -200,7 +201,7 @@ mistake to see what should have been played. Replays aren't logged as new games.
 | "attempted relative import with no known parent package" | Run `python -m connect4`, not `python connect4`. |
 | "Couldn't open camera" | Allow camera access for your terminal in System Settings → Privacy & Security → Camera, then restart the app. |
 | Wrong camera, or a black or placeholder image | Try `--camera 1` or `--camera 2`. |
-| "Board not found" | Turn the board to face the camera, and make sure the whole board is in view. If it still fails, press C and click the 4 corner holes. |
+| "Board not found" | Turn the board to face the camera, make sure the whole board is in view, and add light if the room is dim. If it still fails, press C and click the 4 corner holes. |
 | A piece is misread | Check for glare or a strong color cast. The color thresholds are in `VisionConfig` in `connect4/vision.py`; `AGENTS.md` explains how to retune them from a captured frame. |
 | "That doesn't look like a real position" | The reading has a floating piece or impossible counts. Usually a hand or glare; it clears once the board is visible again. |
 | Wrong player shown to move | If Yellow went first, press F or start with `--first yellow`. |
@@ -256,3 +257,11 @@ python -m pytest --cov=connect4 --cov-report=html        # coverage report in ht
 The tests cover the solver (checked against brute force), board reading on
 rendered and real photos, the game tracker, audio and the app logic. They don't
 need a webcam.
+
+## Contributing
+
+- **AI agents and developers:** start with [`AGENTS.md`](AGENTS.md). It covers
+  the architecture, conventions, how colors are calibrated, and known pitfalls.
+- **Planned work:** see [`TODO.md`](TODO.md), including an optional C solver for
+  perfect play from move 1.
+- **Changes:** work on a branch and open a pull request into `main`.
