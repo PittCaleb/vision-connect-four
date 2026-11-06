@@ -71,6 +71,7 @@ docs/screenshot.jpg  README image, rendered from --demo 4455 (not a real photo)
 README.md            user guide (GitHub landing page)
 AGENTS.md            this file: the single source of instructions for AI agents
 TODO.md              open work (optional C solver, ideas)
+LICENSE              MIT
 CLAUDE.md, GEMINI.md, .github/copilot-instructions.md, .cursor/rules/agents.mdc,
 .windsurfrules       pointer files that send each AI tool to AGENTS.md; keep them
                      as pointers only, and put new instructions here instead

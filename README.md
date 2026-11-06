@@ -290,3 +290,7 @@ need a webcam.
 - **Planned work:** see [`TODO.md`](TODO.md), including an optional C solver for
   perfect play from move 1.
 - **Changes:** work on a branch and open a pull request into `main`.
+
+## License
+
+[MIT](LICENSE): free to use, modify and share, as long as the copyright notice is kept.
