@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Tests and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Created at runtime
+games/
+calibration.json
+
+# Editors
+.idea/
+.vscode/
+.DS_Store
